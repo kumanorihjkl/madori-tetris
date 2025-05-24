@@ -6,7 +6,7 @@ export const PIECE_DEFINITIONS: Record<PieceType, PieceDefinition> = {
     type: 'LDK',
     category: 'building',
     size: { width: 5, height: 4 },
-    rotatable: false,
+    rotatable: true,
     color: '#2563eb', // 青
     points: 200, // 5×4×10
   },
@@ -14,7 +14,7 @@ export const PIECE_DEFINITIONS: Record<PieceType, PieceDefinition> = {
     type: '寝室',
     category: 'building',
     size: { width: 4, height: 3 },
-    rotatable: false,
+    rotatable: true,
     color: '#7c3aed', // 紫
     points: 120, // 4×3×10
   },
@@ -171,7 +171,8 @@ export class PieceBag {
     const piece = this.bag.pop();
     if (!piece) {
       // フォールバックとして基本ピースを返す
-      return 'LDK' as PieceType;
+      const fallbackPiece: PieceType = 'LDK';
+      return fallbackPiece;
     }
     return piece;
   }
