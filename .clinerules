@@ -1,0 +1,196 @@
+# 間取りテトリス・プロ ライト版 開発ルール
+
+## プロジェクト概要
+TypeScript + React + Viteで実装されたブラウザゲーム「間取りテトリス・プロ ライト版」の開発ルールとガイドラインです。
+
+## 技術スタック
+- **フロントエンド**: React 18, TypeScript, Vite
+- **状態管理**: Redux Toolkit
+- **スタイリング**: Tailwind CSS
+- **描画**: HTML5 Canvas
+- **テスト**: Vitest
+- **リンター**: ESLint, Prettier
+
+## ディレクトリ構造ルール
+
+### src/components/
+- Reactコンポーネントを配置
+- 1ファイル1コンポーネントの原則
+- PascalCaseでファイル名を命名
+- 例: `GameCanvas.tsx`, `SidePanel.tsx`
+
+### src/hooks/
+- カスタムフックを配置
+- `use`プレフィックスで開始
+- camelCaseでファイル名を命名
+- 例: `useGameControls.ts`, `useGameLoop.ts`
+
+### src/logic/
+- ゲームロジック・ユーティリティ関数を配置
+- 純粋関数として実装
+- 副作用を避ける
+- 例: `types.ts`, `pieces.ts`, `grid.ts`, `scoring.ts`
+
+### src/store/
+- Redux関連ファイルを配置
+- Redux Toolkitのsliceパターンを使用
+- 例: `gameSlice.ts`, `index.ts`
+
+### src/logic/__tests__/
+- テストファイルを配置
+- `*.test.ts`形式で命名
+- 主要なロジック関数をテスト対象とする
+
+## コーディング規約
+
+### TypeScript
+- 厳格モード (`"strict": true`) を使用
+- 型注釈を明示的に記述
+- `any`型の使用を避ける
+- インターフェースは`interface`、型エイリアスは`type`を使用
+
+### React
+- 関数コンポーネントを使用
+- Hooksを活用
+- propsの型定義を必須とする
+- useEffectの依存配列を適切に管理
+
+### Redux
+- Redux ToolkitのcreateSliceを使用
+- Immerによる不変性を活用
+- アクションクリエーターの型安全性を確保
+
+### スタイリング
+- Tailwind CSSのユーティリティクラスを使用
+- カスタムCSSは最小限に抑える
+- レスポンシブデザインを考慮
+
+## ファイル命名規約
+
+### コンポーネント
+- PascalCase: `GameCanvas.tsx`
+- 機能を表す明確な名前
+
+### フック
+- camelCase + useプレフィックス: `useGameControls.ts`
+
+### ロジック
+- camelCase: `scoring.ts`, `pieces.ts`
+
+### 型定義
+- `types.ts`にまとめて定義
+- インターフェース名はPascalCase
+
+## Git規約
+
+### ブランチ命名
+- `feature/機能名`
+- `bugfix/修正内容`
+- `refactor/リファクタリング内容`
+
+### コミットメッセージ
+```
+type: 簡潔な説明
+
+詳細な説明（必要に応じて）
+```
+
+#### type一覧
+- `feat`: 新機能
+- `fix`: バグ修正
+- `refactor`: リファクタリング
+- `style`: スタイル修正
+- `test`: テスト追加・修正
+- `docs`: ドキュメント更新
+
+## テスト規約
+
+### 単体テスト
+- 主要なロジック関数をテスト
+- テストケース名は日本語で記述
+- AAA（Arrange, Act, Assert）パターンを使用
+
+### テスト対象
+- 建蔽率計算
+- 採光チェック
+- ゾーン完成判定
+- グリッド操作
+- ピース回転・移動
+
+## パフォーマンス規約
+
+### React
+- useMemoでの最適化を適切に使用
+- useCallbackでの関数メモ化
+- 不要な再レンダリングを避ける
+
+### Canvas
+- requestAnimationFrameを使用
+- 描画の最適化を考慮
+
+## セキュリティ規約
+
+### 入力検証
+- ユーザー入力の検証
+- 型安全性の確保
+
+### 依存関係
+- 定期的な依存関係の更新
+- 脆弱性チェック
+
+## ドキュメント規約
+
+### コメント
+- 複雑なロジックには日本語コメント
+- JSDocスタイルでの関数説明
+
+### README
+- セットアップ手順の明記
+- 操作方法の説明
+- 技術スタックの記載
+
+## 開発フロー
+
+### 新機能開発
+1. featureブランチ作成
+2. 実装
+3. テスト作成
+4. ESLint/Prettier実行
+5. プルリクエスト作成
+
+### バグ修正
+1. bugfixブランチ作成
+2. 修正
+3. テスト確認
+4. プルリクエスト作成
+
+## 禁止事項
+
+### コード
+- `console.log`の本番環境への残存
+- 未使用のimport
+- 型注釈の省略（推論できない場合）
+- 魔法数値の使用
+
+### Git
+- 直接mainブランチへのpush
+- 意味のないコミットメッセージ
+- 大きすぎるコミット
+
+## 推奨事項
+
+### 開発環境
+- VS Code使用
+- 適切な拡張機能の導入
+  - TypeScript Hero
+  - ESLint
+  - Prettier
+  - Tailwind CSS IntelliSense
+
+### デバッグ
+- React Developer Tools使用
+- Redux DevTools使用
+- ブラウザの開発者ツール活用
+
+## 更新履歴
+- 2025-05-24: 初版作成
