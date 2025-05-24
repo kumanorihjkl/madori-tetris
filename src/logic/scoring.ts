@@ -193,6 +193,19 @@ export function shouldLevelUp(piecesPlaced: number, currentLevel: number): boole
   return piecesPlaced >= requiredPieces;
 }
 
+// 行消去時のスコアを計算
+export function calculateLineClearScore(linesCleared: number, level: number): number {
+  const baseScores = {
+    1: 100,   // シングル
+    2: 300,   // ダブル
+    3: 500,   // トリプル
+    4: 800,   // テトリス
+  };
+  
+  const baseScore = baseScores[linesCleared as keyof typeof baseScores] || 0;
+  return baseScore * level;
+}
+
 // レベルに応じた落下速度を取得（ミリ秒）
 export function getDropSpeed(level: number): number {
   if (level <= 3) {

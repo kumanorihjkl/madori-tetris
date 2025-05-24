@@ -2,11 +2,11 @@ import { createSlice } from '@reduxjs/toolkit';
 import type { PayloadAction } from '@reduxjs/toolkit';
 import type { GameState, PieceType, PieceInstance, Controls } from '../logic/types';
 import { GRID_WIDTH, GRID_HEIGHT } from '../logic/types';
-import { createEmptyGrid, isPositionValid, placePieceOnGrid, calculateHardDropPosition } from '../logic/grid';
+import { createEmptyGrid, isPositionValid, placePieceOnGrid, calculateHardDropPosition, findCompletedLines, clearLines } from '../logic/grid';
 import { movePiece as moveGridPiece } from '../logic/grid';
 import { createPieceInstance, getSpawnPosition, PieceBag } from '../logic/pieces';
 import { rotatePiece as rotateGridPiece } from '../logic/pieces';
-import { calculateGameStats, calculatePieceScore, checkGameOverConditions, shouldLevelUp, getDropSpeed } from '../logic/scoring';
+import { calculateGameStats, calculatePieceScore, checkGameOverConditions, shouldLevelUp, getDropSpeed, calculateLineClearScore } from '../logic/scoring';
 
 // 初期状態
 const initialState: GameState = {
@@ -27,6 +27,50 @@ const initialState: GameState = {
 
 // ピースバッグのインスタンス
 const pieceBag = new PieceBag();
+
+// 行消去処理とピースリスト更新のヘルパー関数
+function processLineClear(state: GameState) {
+  // 完成した行を検出
+  const completedLines = findCompletedLines(state.grid);
+  
+  if (completedLines.length > 0) {
+    // 行を消去
+    state.grid = clearLines(state.grid, completedLines);
+    
+    // 行消去数を更新
+    state.linesCleared += completedLines.length;
+    
+    // 行消去スコアを加算
+    state.score += calculateLineClearScore(completedLines.length, state.level);
+    
+    // 消去された行に含まれていたピースを配置済みピースリストから削除
+    state.placedPieces = state.placedPieces.filter(piece => {
+      // ピースが消去された行に含まれているかチェック
+      const pieceBottomY = piece.position.y + piece.size.height - 1;
+      const pieceTopY = piece.position.y;
+      
+      // ピースが消去された行と重複しているかチェック
+      for (const lineY of completedLines) {
+        if (lineY >= pieceTopY && lineY <= pieceBottomY) {
+          return false; // このピースは削除
+        }
+      }
+      return true; // このピースは保持
+    });
+    
+    // 残ったピースの位置を調整（消去された行の分だけ下に移動）
+    state.placedPieces = state.placedPieces.map(piece => {
+      const linesBelow = completedLines.filter(lineY => lineY > piece.position.y + piece.size.height - 1).length;
+      return {
+        ...piece,
+        position: {
+          ...piece.position,
+          y: piece.position.y + linesBelow
+        }
+      };
+    });
+  }
+}
 
 const gameSlice = createSlice({
   name: 'game',
@@ -115,6 +159,9 @@ const gameSlice = createSlice({
           // スコア加算
           state.score += calculatePieceScore(placedPiece);
           
+          // 行消去処理
+          processLineClear(state);
+          
           // ピースバッグに配置を通知
           pieceBag.updatePlacedCount(placedPiece.type);
           
@@ -183,6 +230,9 @@ const gameSlice = createSlice({
         
         // スコア加算
         state.score += calculatePieceScore(placedPiece);
+        
+        // 行消去処理
+        processLineClear(state);
         
         // ピースバッグに配置を通知
         pieceBag.updatePlacedCount(placedPiece.type);
@@ -274,6 +324,9 @@ const gameSlice = createSlice({
       // スコア加算
       state.score += calculatePieceScore(placedPiece);
       
+      // 行消去処理
+      processLineClear(state);
+      
       // ピースバッグに配置を通知
       pieceBag.updatePlacedCount(placedPiece.type);
       
@@ -335,6 +388,9 @@ const gameSlice = createSlice({
             
             // スコア加算
             state.score += calculatePieceScore(placedPiece);
+            
+            // 行消去処理
+            processLineClear(state);
             
             // ピースバッグに配置を通知
             pieceBag.updatePlacedCount(placedPiece.type);
