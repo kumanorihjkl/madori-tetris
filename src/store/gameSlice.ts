@@ -43,32 +43,79 @@ function processLineClear(state: GameState) {
     // 行消去スコアを加算
     state.score += calculateLineClearScore(completedLines.length, state.level);
     
-    // 消去された行に含まれていたピースを配置済みピースリストから削除
-    state.placedPieces = state.placedPieces.filter(piece => {
-      // ピースが消去された行に含まれているかチェック
+    // 配置済みピースリストを更新（部分的に消去されたピースも考慮）
+    const updatedPieces: PieceInstance[] = [];
+    
+    for (const piece of state.placedPieces) {
       const pieceBottomY = piece.position.y + piece.size.height - 1;
       const pieceTopY = piece.position.y;
       
       // ピースが消去された行と重複しているかチェック
-      for (const lineY of completedLines) {
-        if (lineY >= pieceTopY && lineY <= pieceBottomY) {
-          return false; // このピースは削除
+      const affectedLines = completedLines.filter(lineY => lineY >= pieceTopY && lineY <= pieceBottomY);
+      
+      if (affectedLines.length === 0) {
+        // ピースが消去された行に含まれていない場合、位置調整のみ
+        const linesBelow = completedLines.filter(lineY => lineY > pieceBottomY).length;
+        updatedPieces.push({
+          ...piece,
+          position: {
+            ...piece.position,
+            y: piece.position.y + linesBelow
+          }
+        });
+      } else {
+        // ピースが部分的または完全に消去された場合
+        // 消去されていない部分を新しいピースとして分割
+        const remainingSegments = [];
+        
+        // 消去された行より上の部分
+        const topSegmentHeight = Math.max(0, Math.min(...affectedLines) - pieceTopY);
+        if (topSegmentHeight > 0) {
+          const linesBelow = completedLines.filter(lineY => lineY > pieceTopY + topSegmentHeight - 1).length;
+          remainingSegments.push({
+            ...piece,
+            id: `${piece.id}-top`,
+            size: {
+              ...piece.size,
+              height: topSegmentHeight
+            },
+            position: {
+              ...piece.position,
+              y: piece.position.y + linesBelow
+            }
+          });
         }
+        
+        // 消去された行より下の部分
+        const bottomSegmentStart = Math.max(...affectedLines) + 1;
+        const bottomSegmentHeight = Math.max(0, pieceBottomY - bottomSegmentStart + 1);
+        if (bottomSegmentHeight > 0) {
+          const linesBelow = completedLines.filter(lineY => lineY > bottomSegmentStart + bottomSegmentHeight - 1).length;
+          remainingSegments.push({
+            ...piece,
+            id: `${piece.id}-bottom`,
+            size: {
+              ...piece.size,
+              height: bottomSegmentHeight
+            },
+            position: {
+              x: piece.position.x,
+              y: bottomSegmentStart + linesBelow - completedLines.length
+            }
+          });
+        }
+        
+        updatedPieces.push(...remainingSegments);
       }
-      return true; // このピースは保持
-    });
+    }
     
-    // 残ったピースの位置を調整（消去された行の分だけ下に移動）
-    state.placedPieces = state.placedPieces.map(piece => {
-      const linesBelow = completedLines.filter(lineY => lineY > piece.position.y + piece.size.height - 1).length;
-      return {
-        ...piece,
-        position: {
-          ...piece.position,
-          y: piece.position.y + linesBelow
-        }
-      };
-    });
+    state.placedPieces = updatedPieces;
+    
+    // グリッドを配置済みピースから再構築して整合性を保つ
+    state.grid = createEmptyGrid();
+    for (const piece of state.placedPieces) {
+      state.grid = placePieceOnGrid(state.grid, piece);
+    }
   }
 }
 

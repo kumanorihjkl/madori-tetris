@@ -3,6 +3,7 @@ import { useSelector } from 'react-redux';
 import type { RootState } from '../store';
 import { GRID_WIDTH, GRID_HEIGHT, CELL_SIZE } from '../logic/types';
 import { PIECE_DEFINITIONS } from '../logic/pieces';
+import { detectWalls, detectExteriorWalls, detectExteriorBoundaryWalls, detectOpenings, detectExteriorOpenings } from '../logic/walls';
 
 export function GameCanvas() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -68,6 +69,50 @@ export function GameCanvas() {
         }
       }
     }
+
+    // 壁を描画（配置済みピース間の境界）
+    const interiorWalls = detectWalls(gameState.grid);
+    const exteriorWalls = detectExteriorWalls(gameState.grid);
+    const exteriorBoundaryWalls = detectExteriorBoundaryWalls(gameState.grid);
+    const allWalls = [...interiorWalls, ...exteriorWalls, ...exteriorBoundaryWalls];
+
+    ctx.strokeStyle = '#000'; // 黒色の実線
+    ctx.lineWidth = 2; // 壁の太さ
+    ctx.lineCap = 'square';
+
+    allWalls.forEach(wall => {
+      ctx.beginPath();
+      ctx.moveTo(wall.x1 * CELL_SIZE, wall.y1 * CELL_SIZE);
+      ctx.lineTo(wall.x2 * CELL_SIZE, wall.y2 * CELL_SIZE);
+      ctx.stroke();
+    });
+
+    // 開口部を灰色の線で描画
+    const interiorOpenings = detectOpenings(gameState.grid);
+    const exteriorOpenings = detectExteriorOpenings(gameState.grid);
+    const allOpenings = [...interiorOpenings, ...exteriorOpenings];
+    
+    ctx.strokeStyle = '#888'; // 灰色の線
+    ctx.lineWidth = 2; // 開口部の線の太さ
+    ctx.lineCap = 'square';
+
+    allOpenings.forEach(opening => {
+      ctx.beginPath();
+      if (opening.type === 'vertical') {
+        // 垂直方向の開口部
+        const startY = opening.y * CELL_SIZE;
+        const endY = (opening.y + opening.size) * CELL_SIZE;
+        ctx.moveTo(opening.x * CELL_SIZE, startY);
+        ctx.lineTo(opening.x * CELL_SIZE, endY);
+      } else {
+        // 水平方向の開口部
+        const startX = opening.x * CELL_SIZE;
+        const endX = (opening.x + opening.size) * CELL_SIZE;
+        ctx.moveTo(startX, opening.y * CELL_SIZE);
+        ctx.lineTo(endX, opening.y * CELL_SIZE);
+      }
+      ctx.stroke();
+    });
 
     // 現在のピースを描画
     if (gameState.currentPiece) {
